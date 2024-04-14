@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trabalho</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<style>
+    
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+    }
+
+    h1, h2 {
+        margin-top: 30px;
+    }
+
+    form {
+        margin-bottom: 20px;
+    }
+
+    label {
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    button {
+        margin-bottom: 10px;
+        padding: 8px;
+        border-radius: 4px;
+        border: 1px solid #ad4886;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    button {
+        cursor: pointer;
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+    }
+
+    button:hover {
+        background-color: #0056b3;
+    }
+
+    ul {
+        list-style-type: none;
+        padding: 0;
+    }
+
+    li {
+        margin-bottom: 10px;
+    }
+
+    /* Estilos específicos para o formulário de atualização */
+    #updateForm {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgb(146, 95, 95);
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+    }
+
+    #updateForm h2 {
+        margin-top: 0;
+        margin-bottom: 20px;
+    }
+
+    /* Estilos responsivos */
+    @media screen and (min-width: 768px) {
+        form {
+            width: 50%;
+            margin: 0 auto;
+        }
+
+        #updateForm {
+            width: 40%;
+        }
+    }
+
+</style>
+<body>
+    <h1>Cadastro</h1>
+    <form action="/usuarios/cadastrar" method="POST">
+        <label for="nome">Nome:</label>
+        <input type="text" id="nome" name="nome" required><br><br>
+        
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required><br><br>
+        
+        <label for="senha">Senha:</label>
+        <input type="password" id="senha" name="senha" required><br><br>
+        
+        <button type="submit">Cadastrar</button>
+    </form>
+
+    <h2>Usuários</h2>
+    <ul id="userList"></ul>
+
+    <div id="updateForm" style="display:none; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+        <h2>Atualizar</h2>
+        <form id="formUpdate">
+            <label for="nomeUpdate">Nome:</label>
+            <input type="text" id="nomeUpdate" name="nome" required><br><br>
+    
+            <label for="emailUpdate">Email:</label>
+            <input type="email" id="emailUpdate" name="email" required><br><br>
+    
+            <label for="senhaUpdate">Senha:</label>
+            <input type="password" id="senhaUpdate" name="senha" required><br><br>
+    
+            <button type="button" onclick="updateUser(currentUserId)">Atualizar</button>
+        </form>
+    </div>
+
+    <script>
+        function loadUsers() {
+            axios.get('/usuarios/')
+                .then(function(response) {
+                    const userList = document.getElementById('userList');
+                    userList.innerHTML = '';
+                    response.data.forEach(user => {
+                        const userItem = document.createElement('li');
+                        userItem.textContent = `Nome: ${user.nome}, Email: ${user.email} `;
+
+                        const deleteButton = document.createElement('button');
+                        deleteButton.textContent = 'Deletar';
+                        deleteButton.style.marginLeft = '10px';
+                        deleteButton.onclick = function() { deleteUser(user._id); };
+                        userItem.appendChild(deleteButton);
+
+                        const updateButton = document.createElement('button');
+                        updateButton.textContent = 'Atualizar';
+                        updateButton.style.marginLeft = '10px';
+                        updateButton.onclick = function() { showUpdateForm(user._id, user.nome, user.email); };
+                        userItem.appendChild(updateButton);
+
+                        userList.appendChild(userItem);
+                    });
+                })
+                .catch(function(error) {
+                    console.error('Erro ao buscar usuários:', error);
+                });
+        }
+
+        function deleteUser(userId) {
+            axios.delete(`/usuarios/${userId}`)
+                .then(function() {
+                    alert('Usuário deletado com sucesso!');
+                    loadUsers();
+                })
+                .catch(function(error) {
+                    alert('Erro ao deletar usuário: ' + error.response.data.message);
+                });
+        }
+
+        let currentUserId = null; 
+
+        function showUpdateForm(userId, nome, email) {
+            currentUserId = userId;
+            document.getElementById('nomeUpdate').value = nome;
+            document.getElementById('emailUpdate').value = email;
+            document.getElementById('updateForm').style.display = 'block';
+        }
+
+        function updateUser(userId) {
+            const nome = document.getElementById('nomeUpdate').value;
+            const email = document.getElementById('emailUpdate').value;
+            const senha = document.getElementById('senhaUpdate').value;
+
+            axios.put(`/usuarios/${userId}`, { nome, email, senha })
+                .then(function(response) {
+                    alert('Usuário atualizado com sucesso!');
+                    document.getElementById('updateForm').style.display = 'none';
+                    loadUsers(); 
+                })
+                .catch(function(error) {
+                    alert('Erro ao atualizar usuário: ' + error.response.data.message);
+                });
+        }
+
+        document.addEventListener('DOMContentLoaded', loadUsers);
+    </script>
+</body>
+</html>
